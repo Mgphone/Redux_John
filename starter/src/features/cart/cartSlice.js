@@ -1,4 +1,6 @@
+import axios from "axios";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { openModal } from "../modal/modalSlice";
 // import cartItems from "../../cartItems";
 const url = "https://course-api.com/react-useReducer-cart-project";
 
@@ -8,14 +10,26 @@ const initialState = {
   total: 0,
   isLoading: true,
 };
-export const getCartItems = createAsyncThunk("cart/getCartItems", async () => {
-  try {
-    const response = await fetch(url);
-    return await response.json();
-  } catch (err) {
-    return console.error();
+export const getCartItems = createAsyncThunk(
+  "cart/getCartItems",
+  async (name, thunkAPI) => {
+    // try {
+    //   const response = await fetch(url);
+    //   return await response.json();
+    // } catch (err) {
+    //   return console.error();
+    // }
+    try {
+      // console.log(name);
+      // console.log(thunkAPI);
+      // console.log(thunkAPI.getState());
+      const resp = await axios(url);
+      return resp.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Something went wrong");
+    }
   }
-});
+);
 const cartSlice = createSlice({
   name: "cart",
   initialState,
@@ -47,19 +61,32 @@ const cartSlice = createSlice({
       state.total = total.toFixed(2);
     },
   },
-  extraReducers: {
-    [getCartItems.pending]: (state) => {
-      state.isLoading = true;
-    },
-    [getCartItems.fulfilled]: (state, action) => {
-      // console.log(action);
-      state.isLoading = false;
-      state.cartItems = action.payload;
-    },
-    [getCartItems.rejected]: (state) => {
-      state.isLoading = false;
-    },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getCartItems.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getCartItems.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.cartItems = action.payload;
+      })
+      .addCase(getCartItems.rejected, (state, action) => {
+        state.isLoading = false;
+      });
   },
+  // extraReducers: {
+  //   [getCartItems.pending]: (state) => {
+  //     state.isLoading = true;
+  //   },
+  //   [getCartItems.fulfilled]: (state, action) => {
+  //     // console.log(action);
+  //     state.isLoading = false;
+  //     state.cartItems = action.payload;
+  //   },
+  //   [getCartItems.rejected]: (state) => {
+  //     state.isLoading = false;
+  //   },
+  // },
 });
 // console.log(cartSlice);
 export const { clearCart, removeItem, increase, decrease, calculateTotals } =
